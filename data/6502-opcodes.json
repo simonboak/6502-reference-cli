@@ -1,0 +1,594 @@
+{
+	"version": "0.0.1",
+	"whatsnew": "Updated to JSON with Python line breaks",
+	"about": "Data borrowed from http://www.6502.org/tutorials/6502opcodes.html by June Tate-Gans (http://www.theonelab.com/ http://github.com/jtgans/6502ops)\\nReformatted by Simon Boak (http://github.com/simonboak) to be valid JSON with Python line breaks",
+	"opcodes": {
+	  "ADC": {
+	      "mnemonic": "ADd with Carry",
+	      "operation": "A + operand + carry → A, C",
+	      "flags": [ "N", "V", "Z", "C" ],
+	      "modes": [
+	          [ "Immediate",    "ADC #$44",    "$69", 2, 2 ],
+	          [ "Zero Page",    "ADC $44",     "$65", 2, 3 ],
+	          [ "Zero Page, X", "ADC $44,X",   "$75", 2, 4 ],
+	          [ "Absolute",     "ADC $4400",   "$6D", 3, 4 ],
+	          [ "Absolute, X",  "ADC $4400,X", "$7D", 3, 4, 1 ],
+	          [ "Absolute, Y",  "ADC $4400,Y", "$79", 3, 4, 1 ],
+	          [ "Indirect, X",  "ADC ($44,X)", "$61", 2, 6 ],
+	          [ "Indirect, Y",  "ADC ($44),Y", "$71", 2, 5, 1 ]
+	      ],
+	      "notes": [
+	          "add 1 cycle if page boundary crossed"
+	      ],
+	      "description": "ADC adds the operand and carry bit, and stores the result in A.\\n\\nADC results are dependant on the setting of the decimal flag. In decimal mode, addition is carried out on the assumption that the values are packed BCD (Binary Coded Decimal).\\n\\nThere is no way to add without carry."
+	  },
+	  "AND": {
+	      "mnemonic": "bitwise AND with accumulator",
+	      "operation": "A AND mem → A",
+	      "flags": [ "N", "Z" ],
+	      "modes": [
+	          [ "Immediate",    "AND #$44",    "$29", 2, 2 ],
+	          [ "Zero Page",    "AND $44",     "$25", 2, 3 ],
+	          [ "Zero Page, X", "AND $44,X",   "$35", 2, 4 ],
+	          [ "Absolute",     "AND $4400",   "$2D", 3, 4 ],
+	          [ "Absolute, X",  "AND $4400,X", "$3D", 3, 4, 1 ],
+	          [ "Absolute, Y",  "AND $4400,Y", "$39", 3, 4, 1 ],
+	          [ "Indirect, X",  "AND ($44,X)", "$21", 2, 6 ],
+	          [ "Indirect, Y",  "AND ($44),Y", "$31", 2, 5, 1 ]
+	      ],
+	      "notes": [
+	          "add 1 cycle if page boundary crossed"
+	      ],
+	      "description": "AND performs a bitwise AND with the accumulator and stores the result in the accumulator."
+	  },
+	  "ASL": {
+	      "mnemonic": "Arithmetic Shift Left",
+	      "operation": "C ← <bits>7654321</bits> ← 0",
+	      "flags": [ "N", "Z", "C" ],
+	      "modes": [
+	          [ "Accumulator",  "ASL",         "$0A", 1, 2 ],
+	          [ "Zero Page",    "ASL $44",     "$06", 2, 5 ],
+	          [ "Zero Page, X", "ASL $44,X",   "$16", 2, 6 ],
+	          [ "Absolute",     "ASL $4400",   "$0E", 3, 6 ],
+	          [ "Absolute, X",  "ASL $4400,X", "$1E", 3, 7 ]
+	      ],
+	      "description": "ASL shifts all bits left one position. 0 is shifted into bit 0 and the original bit 7 is shifted into the Carry flag."
+	  },
+	  "BIT": {
+	      "mnemonic": "test BITs",
+	      "operation": "A AND mem,\\nmem₇ → N,\\nmem₆ → V",
+	      "flags": [ "N", "V", "Z" ],
+	      "modes": [
+	          [ "Zero Page",    "BIT $44",     "$24", 2, 3 ],
+	          [ "Absolute",     "BIT $4400",   "$2C", 3, 4 ]
+	      ],
+	      "description": "BIT sets the Z flag as though the value in the address tested were ANDed with the accumulator. The N and V flags are set to match bits 7 and 6 respectively in the value stored at the tested address.\\n\\nBIT is often used to skip one or two following bytes as in:\\n\\nCLOSE1 LDX #$10       If entered here, we\\n.BYTE $2C      effectively perform\\nCLOSE2 LDX #$20       a BIT test on $20A2,\\n.BYTE $2C      another one on $30A2,\\nCLOSE3 LDX #$30       and end up with the X\\nCLOSEX LDA #12        register still at $10\\nSTA ICCOM,X    upon arrival here.\\n\\nBeware: a BIT instruction used in this way as a NOP does have effects: the flags may be modified, and the read of the absolute address, if it happens to access an I/O device, may cause an unwanted action."
+	  },
+	  "BPL": {
+	      "mnemonic": "Branch on PLus",
+	      "operation": "Branch to offset when N = 0",
+	      "flags": [ ],
+	      "modes": [
+	          [ "Relative",     "BPL $4400",   "$10", 2, 3, 1 ]
+	      ],
+	      "notes": [
+	          "A branch not taken requires two machine cycles. If the branch  is taken, add another cycle if it crosses a page boundary."
+	      ],
+	      "description": "All branches are relative mode and have a length of two bytes. Branches are dependant on the status of the flag bits when the op code is encountered.\\n\\nThere is no BRA (BRanch Always) instruction, but it can be easily emulated by branching on the basis of a known condition. One of the best flags to use for this purpose is oVerflow which is unchanged by all but addition and subtraction operations.\\n\\nA page boundary crossing occurs when the branch destination is on a different page than the instruction AFTER the branch instruction. For example:\\n\\nSEC\\nBCS LABEL\\nNOP\\n\\nA page boundary crossing occurs (i.e. the BCS takes 4 cycles) when (the address of) LABEL and the NOP are on different pages. This means that\\n\\nCLV\\nBVC LABEL\\nLABEL NOP\\n\\nthe BVC instruction will take 3 cycles no matter what address it is located at."
+	  },
+	  "BMI": {
+	      "mnemonic": "Branch on MInus",
+	      "operation": "Branch to offset when N = 1",
+	      "flags": [ ],
+	      "modes": [
+	          [ "Relative",     "BMI $4400",   "$30", 2, 3, 1 ]
+	      ],
+	      "notes": [
+	          "A branch not taken requires two machine cycles. If the branch is taken, add another cycle if it crosses a page boundary."
+	      ],
+	      "description": "All branches are relative mode and have a length of two bytes. Branches are dependant on the status of the flag bits when the op code is encountered.\\n\\nThere is no BRA (BRanch Always) instruction, but it can be easily emulated by branching on the basis of a known condition. One of the best flags to use for this purpose is oVerflow which is unchanged by all but addition and subtraction operations.\\n\\nA page boundary crossing occurs when the branch destination is on a different page than the instruction AFTER the branch instruction. For example:\\n\\nSEC\\nBCS LABEL\\nNOP\\\n\\nA page boundary crossing occurs (i.e. the BCS takes 4 cycles) when (the address of) LABEL and the NOP are on different pages. This means that\\n\\nCLV\\nBVC LABEL\\nLABEL NOP\\n\\nthe BVC instruction will take 3 cycles no matter what address it is located at."
+	  },
+	  "BVC": {
+	      "mnemonic": "Branch on oVerflow Clear",
+	      "flags": [ ],
+	      "operation": "Branch to offset when V = 0",
+	      "modes": [
+	          [ "Relative",     "BVC $4400",   "$50", 2, 3, 1 ]
+	      ],
+	      "notes": [
+	          "A branch not taken requires two machine cycles. If the branch is taken, add another cycle if it crosses a page boundary."
+	      ],
+	      "description": "All branches are relative mode and have a length of two bytes. Branches are dependant on the status of the flag bits when the op code is encountered.\\n\\nThere is no BRA (BRanch Always) instruction, but it can be easily emulated by branching on the basis of a known condition. One of the best flags to use for this purpose is oVerflow which is unchanged by all but addition and subtraction operations.\\n\\nA page boundary crossing occurs when the branch destination is on a different page than the instruction AFTER the branch instruction. For example:\\n\\nSEC\\nBCS LABEL\\nNOP\\n\\nA page boundary crossing occurs (i.e. the BCS takes 4 cycles) when (the address of) LABEL and the NOP are on different pages. This means that\\n\\nCLV\\nBVC LABEL\\nLABEL NOP\\n\\nthe BVC instruction will take 3 cycles no matter what address it is located at."
+	  },
+	  "BVS": {
+	      "mnemonic": "Branch on oVerflow Set",
+	      "operation": "Branch to offset when V = 1",
+	      "flags": [ ],
+	      "modes": [
+	          [ "Relative",     "BVS $4400",   "$70", 2, 3, 1 ]
+	      ],
+	      "notes": [
+	          "A branch not taken requires two machine cycles. If the branch is taken, add another cycle if it crosses a page boundary."
+	      ],
+	      "description": "All branches are relative mode and have a length of two bytes. Branches are dependant on the status of the flag bits when the op code is encountered.\\n\\nThere is no BRA (BRanch Always) instruction, but it can be easily emulated by branching on the basis of a known condition. One of the best flags to use for this purpose is oVerflow which is unchanged by all but addition and subtraction operations.\\n\\nA page boundary crossing occurs when the branch destination is\\n\\non a different page than the instruction AFTER the branch instruction. For example:\\n\\nSEC\\nBCS LABEL\\nNOP\\n\\nA page boundary crossing occurs (i.e. the BCS takes 4 cycles) when (the address of) LABEL and the NOP are on different pages. This means that\\n\\nCLV\\nBVC LABEL\\nLABEL NOP\\n\\nthe BVC instruction will take 3 cycles no matter what address it is located at."
+	  },
+	  "BCC": {
+	      "mnemonic": "Branch on Carry Clear",
+	      "operation": "Branch to offset when C = 0",
+	      "flags": [ ],
+	      "modes": [
+	          [ "Relative",     "BCC $4400",   "$90", 2, 3, 1 ]
+	      ],
+	      "notes": [
+	          "A branch not taken requires two machine cycles. If the branch is taken, add another cycle if it crosses a page boundary."
+	      ],
+	      "description": "All branches are relative mode and have a length of two bytes. Branches are dependant on the status of the flag bits when the op code is encountered.\\n\\nThere is no BRA (BRanch Always) instruction, but it can be easily emulated by branching on the basis of a known condition. One of the best flags to use for this purpose is oVerflow which is unchanged by all but addition and subtraction operations.\\nA page boundary crossing occurs when the branch destination is on a different page than the instruction AFTER the branch instruction. For example:\\n\\nSEC\\nBCS LABEL\\nNOP\\n\\nA page boundary crossing occurs (i.e. the BCS takes 4 cycles) when (the address of) LABEL and the NOP are on different pages. This means that\\n\\nCLV\\nBVC LABEL\\nLABEL NOP\\n\\nthe BVC instruction will take 3 cycles no matter what address it is located at."
+	  },
+	  "BCS": {
+	      "mnemonic": "Branch on Carry Set",
+	      "operation": "Branch to offset when C = 1",
+	      "flags": [ ],
+	      "modes": [
+	          [ "Relative",     "BCS $4400",   "$B0", 2, 3, 1 ]
+	      ],
+	      "notes": [
+	          "A branch not taken requires two machine cycles. If the branch is taken, add another cycle if it crosses a page boundary."
+	      ],
+	      "description": "All branches are relative mode and have a length of two bytes. Branches are dependant on the status of the flag bits when the op code is encountered.\\n\\nThere is no BRA (BRanch Always) instruction, but it can be easily emulated by branching on the basis of a known condition. One of the best flags to use for this purpose is oVerflow which is unchanged by all but addition and subtraction operations.\\n\\nA page boundary crossing occurs when the branch destination is on a different page than the instruction AFTER the branch instruction. For example:\\n\\nSEC\\nBCS LABEL\\nNOP\\n\\nA page boundary crossing occurs (i.e. the BCS takes 4 cycles) when (the address of) LABEL and the NOP are on different pages. This means that\\n\\nCLV\\nBVC LABEL\\nLABEL NOP\\n\\nthe BVC instruction will take 3 cycles no matter what address it is located at."
+	  },
+	  "BNE": {
+	      "mnemonic": "Branch on Not Equal",
+	      "flags": [ ],
+	      "operation": "Branch to offset when Z = 0",
+	      "modes": [
+	          [ "Relative",     "BPL $4400",   "$D0", 2, 3, 1 ]
+	      ],
+	      "notes": [
+	          "A branch not taken requires two machine cycles. If the branch is taken, add another cycle if it crosses a page boundary."
+	      ],
+	      "description": "All branches are relative mode and have a length of two bytes. Branches are dependant on the status of the flag bits when the op code is encountered.\\n\\nThere is no BRA (BRanch Always) instruction, but it can be easily emulated by branching on the basis of a known condition. One of the best flags to use for this purpose is oVerflow which is unchanged by all but addition and subtraction operations.\\n\\nA page boundary crossing occurs when the branch destination is on a different page than the instruction AFTER the branch instruction. For example:\\n\\nSEC\\nBCS LABEL\\nNOP\\n\\nA page boundary crossing occurs (i.e. the BCS takes 4 cycles) when (the address of) LABEL and the NOP are on different pages. This means that\\n\\nCLV\\nBVC LABEL\\nLABEL NOP\\n\\nthe BVC instruction will take 3 cycles no matter what address it is located at."
+	  },
+	  "BEQ": {
+	      "mnemonic": "Branch on EQual",
+	      "operation": "Branch to offset when Z = 1",
+	      "flags": [ ],
+	      "modes": [
+	          [ "Relative",     "BEQ $4400",   "$F0", 2, 3, 1 ]
+	      ],
+	      "notes": [
+	          "A branch not taken requires two machine cycles. If the branch is taken, add another cycle if it crosses a page boundary."
+	      ],
+	      "description": "All branches are relative mode and have a length of two bytes. Branches are dependant on the status of the flag bits when the op code is encountered.\\n\\nThere is no BRA (BRanch Always) instruction, but it can be easily emulated by branching on the basis of a known condition. One of the best flags to use for this purpose is oVerflow which is unchanged by all but addition and subtraction operations.\\n\\nA page boundary crossing occurs when the branch destination is on a different page than the instruction AFTER the branch instruction. For example:\\n\\nSEC\\nBCS LABEL\\nNOP\\n\\nA page boundary crossing occurs (i.e. the BCS takes 4 cycles) when (the address of) LABEL and the NOP are on different pages. This means that\\n\\nCLV\\nBVC LABEL\\nLABEL NOP\\n\\nthe BVC instruction will take 3 cycles no matter what address it is located at."
+	  },
+	  "BRK": {
+	      "mnemonic": "BReaK to non-maskable interrupt handler",
+	      "operation": "Forced interrupt, PC + 2 pushed, SP pushed",
+	      "flags": [ "B" ],
+	      "modes": [
+	          [ "Implied",      "BRK",         "$00", 1, 7 ]
+	      ],
+	      "description": "BRK causes a non-maskable interrupt and increments the program counter by one. Therefore an RTI will go to the address of the BRK +2 so that BRK may be used to replace a two-byte instruction for debugging and the subsequent RTI will be correct."
+	  },
+	  "CMP": {
+	      "mnemonic": "CoMPare accumulator",
+	      "operation": "A - mem",
+	      "flags": [ "N", "Z", "C" ],
+	      "modes": [
+	          [ "Immediate",    "CMP #$44",    "$C9", 2, 2 ],
+	          [ "Zero Page",    "CMP $44",     "$C5", 2, 3 ],
+	          [ "Zero Page, X", "CMP $44,X",   "$D5", 2, 4 ],
+	          [ "Absolute",     "CMP $4400",   "$CD", 3, 4 ],
+	          [ "Absolute, X",  "CMP $4400,X", "$DD", 3, 4, 1 ],
+	          [ "Absolute, Y",  "CMP $4400,Y", "$D9", 3, 4, 1 ],
+	          [ "Indirect, X",  "CMP ($44,X)", "$C1", 2, 6 ],
+	          [ "Indirect, Y",  "CMP ($44),Y", "$D1", 2, 5, 1 ]
+	      ],
+	      "notes": [
+	          "add 1 cycle if page boundary crossed"
+	      ],
+	      "description": "Compare sets flags as if a subtraction had been carried out. If the value in the accumulator is equal or greater than the compared value, the Carry flag will be set. The equal (Z) and sign (S) flags will be set based on equality or lack thereof and the sign (i.e. A>=$80) of the accumulator."
+	  },
+	  "CPX": {
+	      "mnemonic": "CoMPare X register",
+	      "operation": "X - mem",
+	      "flags": [ "N", "Z", "C" ],
+	      "modes": [
+	          [ "Immediate",    "CPX #$44",    "$E0", 2, 2 ],
+	          [ "Zero Page",    "CPX $44",     "$E4", 2, 3 ],
+	          [ "Absolute",     "CPX $4400",   "$EC", 3, 4 ]
+	      ],
+	      "description": "Compare sets flags as if a subtraction had been carried out. If the value in the accumulator is equal or greater than the compared value, the Carry flag will be set. The equal (Z) and sign (S) flags will be set based on equality or lack thereof and the sign (i.e. A>=$80) of the accumulator."
+	  },
+	  "CPY": {
+	      "mnemonic": "CoMPare Y register",
+	      "operation": "Y - mem",
+	      "flags": [ "N", "Z", "C" ],
+	      "modes": [
+	          [ "Immediate",    "CPX #$44",    "$C0", 2, 2 ],
+	          [ "Zero Page",    "CPX $44",     "$C4", 2, 3 ],
+	          [ "Absolute",     "CPX $4400",   "$CC", 3, 4 ]
+	      ],
+	      "description": "Compare sets flags as if a subtraction had been carried out. If the value in the accumulator is equal or greater than the compared value, the Carry flag will be set. The equal (Z) and sign (S) flags will be set based on equality or lack thereof and the sign (i.e. A>=$80) of the accumulator."
+	  },
+	  "DEC": {
+	      "mnemonic": "DECrement memory",
+	      "operation": "mem - 1 → mem",
+	      "flags": [ "N", "Z" ],
+	      "modes": [
+	          [ "Zero Page",    "DEC $44",     "$C6", 2, 5 ],
+	          [ "Zero Page, X", "DEC $44,X",   "$D6", 2, 6 ],
+	          [ "Absolute",     "DEC $4400",   "$CE", 3, 6 ],
+	          [ "Absolute, X",  "DEC $4400,X", "$DE", 3, 7 ]
+	      ]
+	  },
+	  "EOR": {
+	      "mnemonic": "bitwise Exclusive OR",
+	      "flags": [ "S", "Z" ],
+	      "modes": [
+	          [ "Immediate",    "EOR #$44",    "$49", 2, 2 ],
+	          [ "Zero Page",    "EOR $44",     "$45", 2, 3 ],
+	          [ "Zero Page, X", "EOR $44,X",   "$55", 2, 4 ],
+	          [ "Absolute",     "EOR $4400",   "$4D", 3, 4 ],
+	          [ "Absolute, X",  "EOR $4400,X", "$5D", 3, 4, 1 ],
+	          [ "Absolute, Y",  "EOR $4400,Y", "$59", 3, 4, 1 ],
+	          [ "Indirect, X",  "EOR ($44,X)", "$41", 2, 6 ],
+	          [ "Indirect, Y",  "EOR ($44),Y", "$51", 2, 5, 1 ]
+	      ],
+	      "notes": [
+	          "add 1 cycle if page boundary crossed"
+	      ]
+	  },
+	  "CLC": {
+	      "mnemonic": "CLear Carry",
+	      "flags": [ "C" ],
+	      "modes": [
+	          [ "Implied",      "CLC",         "$18", 1, 2 ]
+	      ]
+	  },
+	  "SEC": {
+	      "mnemonic": "SEt Carry",
+	      "flags": [ "C" ],
+	      "modes": [
+	          [ "Implied",      "SEC",         "$38", 1, 2 ]
+	      ]
+	  },
+	  "CLI": {
+	      "mnemonic": "CLear Interrupt",
+	      "flags": [ "I" ],
+	      "modes": [
+	          [ "Implied",      "CLI",         "$58", 1, 2 ]
+	      ],
+	      "description": "The Interrupt flag is used to prevent (SEI) or enable (CLI) maskable interrupts (aka IRQ's). It does not signal the presence or absence of an interrupt condition. The 6502 will set this flag automatically in response to an interrupt and restore it to its prior status on completion of the interrupt service routine. If you want your interrupt service routine to permit other maskable interrupts, you must clear the I flag in your code."
+	  },
+	  "SEI": {
+	      "mnemonic": "SEt Interrupt",
+	      "flags": [ "I" ],
+	      "modes": [
+	          [ "Implied",      "SEI",         "$78", 1, 2 ]
+	      ],
+	      "description": "The Interrupt flag is used to prevent (SEI) or enable (CLI) maskable interrupts (aka IRQ's). It does not signal the presence or absence of an interrupt condition. The 6502 will set this flag automatically in response to an interrupt and restore it to its prior status on completion of the interrupt service routine. If you want your interrupt service routine to permit other maskable interrupts, you must clear the I flag in your code."
+	  },
+	  "CLV": {
+	      "mnemonic": "CLear oVerflow",
+	      "flags": [ "V" ],
+	      "modes": [
+	          [ "Implied",      "CLV",         "$B8", 1, 2 ]
+	      ],
+	      "description": "The overflow flag is generally misunderstood and therefore under-utilized. After an ADC or SBC instruction, the overflow flag will be set if the twos compliment result is less than -128 or greater than +127, and it will be cleared otehrwise.\\n\\nIn twos compliment, $80 through $FF represents -128 through -1, and $00 through $7F represents 0 through +127. Thus, after:\\n\\nCLC\\nLDA #$7F ;    +127\\nADC #$01 ; +    +1\\n\\nthe overflow flag is 1 (+127 + + 1 = +128), and after:\\n\\nCLC\\nLDA #$81 ;    -127\\nADC #$FF ; +    -1\\n\\nthe overflow flag is 0 (-127 + -1 = -128). The overflow flag is not affected by increments, decrements, shifts and logical operations i.e. only ADC, BIT, CLV, PLP, RTI, and SBC affect it. There is no op code to set the overflow, but a BIT test on an RTS instruction will do the trick."
+	  },
+	  "CLD": {
+	      "mnemonic": "CLear Decimal",
+	      "flags": [ "D" ],
+	      "modes": [
+	          [ "Implied",      "CLD",         "$D8", 1, 2 ]
+	      ],
+	      "description": "The Decimal flag controls how the 6502 adds and subtracts. If set, arithmetic is carried out in packed binary coded decimal. This flag is unchanged by interrupts and is unknown on power-up. The implication is that a CLD should be included in boot or interrupt coding."
+	  },
+	  "SED": {
+	      "mnemonic": "SEt Decimal",
+	      "flags": [ "D" ],
+	      "modes": [
+	          [ "Implied",      "SED",         "$F8", 1, 2 ]
+	      ],
+	      "description": "The Decimal flag controls how the 6502 adds and subtracts. If set, arithmetic is carried out in packed binary coded decimal. This flag is unchanged by interrupts and is unknown on power-up. The implication is that a CLD should be included in boot or interrupt coding."
+	  },
+	  "INC": {
+	      "mnemonic": "INCrement memory",
+	      "flags": [ "S", "Z" ],
+	      "modes": [
+	          [ "Zero Page",    "INC $44",     "$E6", 2, 5 ],
+	          [ "Zero Page, X", "INC $44,X",   "$F6", 2, 6 ],
+	          [ "Absolute",     "INC $4400",   "$EE", 3, 4 ],
+	          [ "Absolute, X",  "INC $4400,X", "$FE", 3, 7 ]
+	      ]
+	  },
+	  "JMP": {
+	      "mnemonic": "JuMP",
+	      "flags": [ ],
+	      "modes": [
+	          [ "Absolute",     "JMP $5597",   "$4C", 3, 3 ],
+	          [ "Indirect",     "JMP ($5597)", "$6C", 3, 5 ]
+	      ],
+	      "description": "JMP transfers program execution to the following address (absolute) or to the location contained in the following address (indirect). Note that there is no carry associated with the indirect jump, so:\\n\\nAN INDIRECT JUMP MUST NEVER USE A VECTOR BEGINNING ON THE LAST BYTE OF A PAGE\\n\\nFor example if address $3000 contains $40, $30FF contains $80, and $3100 contains $50, the result of JMP ($30FF) will be  atransfer of control to $4080 rather than $5080 as you inteded i.e. the 6502 took the low byte of the address from $30FF and the high byte from $3000."
+	  },
+	  "JSR": {
+	      "mnemonic": "Jump to SubRoutine",
+	      "flags": [ ],
+	      "modes": [
+	          [ "Absolute",     "JMP $5597",   "$20", 3, 6 ]
+	      ],
+	      "description": "JSR pushes the address-1 of the next operation on to the stack before transferring program control to the following address. Subroutines are normally terminated by an RTS opcode."
+	  },
+	  "LDA": {
+	      "mnemonic": "LoaD Accumulator",
+	      "flags": [ "S", "Z" ],
+	      "modes": [
+	          [ "Immediate",    "LDA #$44",    "$A9", 2, 2 ],
+	          [ "Zero Page",    "LDA $44",     "$A5", 2, 3 ],
+	          [ "Zero Page, X", "LDA $44,X",   "$B5", 2, 4 ],
+	          [ "Absolute",     "LDA $4400",   "$AD", 3, 4 ],
+	          [ "Absolute, X",  "LDA $4400,X", "$BD", 3, 4, 1 ],
+	          [ "Absolute, Y",  "LDA $4400,Y", "$B9", 3, 4, 1 ],
+	          [ "Indirect, X",  "LDA ($44,X)", "$A1", 2, 6 ],
+	          [ "Indirect, Y",  "LDA ($44),Y", "$B1", 2, 5, 1 ]
+	      ],
+	      "notes": [
+	          "add 1 cycle if page boundary crossed"
+	      ]
+	  },
+	  "LDX": {
+	      "mnemonic": "LoaD X register",
+	      "flags": [ "S", "Z" ],
+	      "modes": [
+	          [ "Immediate",    "LDX #$44",    "$A2", 2, 2 ],
+	          [ "Zero Page",    "LDX $44",     "$A6", 2, 3 ],
+	          [ "Zero Page, Y", "LDX $44,X",   "$B6", 2, 4 ],
+	          [ "Absolute",     "LDX $4400",   "$AE", 3, 4 ],
+	          [ "Absolute, Y",  "LDX $4400,Y", "$BE", 3, 4, 1 ]
+	      ],
+	      "notes": [
+	          "add 1 cycle if page boundary crossed"
+	      ]
+	  },
+	  "LDY": {
+	      "mnemonic": "LoaD Y register",
+	      "flags": [ "S", "Z" ],
+	      "modes": [
+	          [ "Immediate",    "LDY #$44",    "$A0", 2, 2 ],
+	          [ "Zero Page",    "LDY $44",     "$A4", 2, 3 ],
+	          [ "Zero Page, X", "LDY $44,X",   "$B4", 2, 4 ],
+	          [ "Absolute",     "LDY $4400",   "$AC", 3, 4 ],
+	          [ "Absolute, X",  "LDY $4400,Y", "$BC", 3, 4, 1 ]
+	      ],
+	      "notes": [
+	          "add 1 cycle if page boundary crossed"
+	      ]
+	  },
+	  "LSR": {
+	      "mnemonic": "Logical Shift Right",
+	      "flags": [ "S", "Z", "C" ],
+	      "modes": [
+	          [ "Accumulator",  "LSR A",       "$4A", 1, 2 ],
+	          [ "Zero Page",    "LSR $44",     "$46", 2, 5 ],
+	          [ "Zero Page, X", "LSR $44,X",   "$56", 2, 6 ],
+	          [ "Absolute",     "LSR $4400",   "$4E", 3, 6 ],
+	          [ "Absolute, X",  "LSR $4400,X", "$5E", 3, 7 ]
+	      ],
+	      "description": "LSR shifts all bits right one position. Bit 0 is shifted into bit 7 and the original bit 0 is shifted into the Carry."
+	  },
+	  "NOP": {
+	      "mnemonic": "No OPeration",
+	      "flags": [ ],
+	      "modes": [
+	          [ "Implied",      "NOP",         "$EA", 1, 2 ]
+	      ],
+	      "description": "NOP is used to reserve space for future modifications or effectively REM out existing code."
+	  },
+	  "ORA": {
+	      "mnemonic": "bitwise OR with Accumulator",
+	      "flags": [ "S", "Z" ],
+	      "modes": [
+	          [ "Immediate",    "ORA #$44",    "$09", 2, 2 ],
+	          [ "Zero Page",    "ORA $44",     "$05", 2, 3 ],
+	          [ "Zero Page, X", "ORA $44,X",   "$15", 2, 4 ],
+	          [ "Absolute",     "ORA $4400",   "$0D", 3, 4 ],
+	          [ "Absolute, X",  "ORA $4400,X", "$1D", 3, 4, 1 ],
+	          [ "Absolute, Y",  "ORA $4400,Y", "$19", 3, 4, 1 ],
+	          [ "Indirect, X",  "ORA ($44,X)", "$01", 2, 6 ],
+	          [ "Indirect, Y",  "ORA ($44),Y", "$11", 2, 5, 1 ]
+	      ],
+	      "notes": [
+	          "add 1 cycle if page boundary crossed"
+	      ]
+	  },
+	  "TAX": {
+	      "mnemonic": "Transfer A to X",
+	      "flags": [ "S", "Z" ],
+	      "modes": [
+	          [ "Implied",      "TAX",         "$AA", 1, 2 ]
+	      ]
+	  },
+	  "TXA": {
+	      "mnemonic": "Transfer X to A",
+	      "flags": [ "S", "Z" ],
+	      "modes": [
+	          [ "Implied",      "TXA",         "$8A", 1, 2 ]
+	      ]
+	  },
+	  "DEX": {
+	      "mnemonic": "DEcrement X",
+	      "flags": [ "S", "Z" ],
+	      "modes": [
+	          [ "Implied",      "DEX",         "$CA", 1, 2 ]
+	      ]
+	  },
+	  "INX": {
+	      "mnemonic": "INcrement X",
+	      "flags": [ "S", "Z" ],
+	      "modes": [
+	          [ "Implied",      "INX",         "$E8", 1, 2 ]
+	      ]
+	  },
+	  "TAY": {
+	      "mnemonic": "Transfer A to Y",
+	      "flags": [ "S", "Z" ],
+	      "modes": [
+	          [ "Implied",      "TAY",         "$A8", 1, 2 ]
+	      ]
+	  },
+	  "TYA": {
+	      "mnemonic": "Transfer Y to A",
+	      "flags": [ "S", "Z" ],
+	      "modes": [
+	          [ "Implied",      "TYA",         "$98", 1, 2 ]
+	      ]
+	  },
+	  "DEY": {
+	      "mnemonic": "DEcrement Y",
+	      "flags": [ "S", "Z" ],
+	      "modes": [
+	          [ "Implied",      "DEY",         "$88", 1, 2 ]
+	      ]
+	  },
+	  "INY": {
+	      "mnemonic": "INcrement Y",
+	      "flags": [ "S", "Z" ],
+	      "modes": [
+	          [ "Implied",      "INY",         "$C8", 1, 2 ]
+	      ]
+	  },
+	  "ROL": {
+	      "mnemonic": "ROtate Left",
+	      "flags": [ "S", "Z", "C" ],
+	      "modes": [
+	          [ "Accumulator",  "ROL A",       "$2A", 1, 2 ],
+	          [ "Zero Page",    "ROL $44",     "$26", 2, 5 ],
+	          [ "Zero Page, X", "ROL $44,X",   "$36", 2, 6 ],
+	          [ "Absolute",     "ROL $4400",   "$2E", 3, 6 ],
+	          [ "Absolute, X",  "ROL $4400,X", "$3E", 3, 7 ]
+	      ],
+	      "description": "ROL shifts all bits left one position. The Carry flag is shifted into bit 0 and the original bit 7 is shifted into the Carry flag."
+	  },
+	  "ROR": {
+	      "mnemonic": "ROtate Right",
+	      "flags": [ "S", "Z", "C" ],
+	      "modes": [
+	          [ "Accumulator",  "ROL A",       "$6A", 1, 2 ],
+	          [ "Zero Page",    "ROL $44",     "$66", 2, 5 ],
+	          [ "Zero Page, X", "ROL $44,X",   "$76", 2, 6 ],
+	          [ "Absolute",     "ROL $4400",   "$6E", 3, 6 ],
+	          [ "Absolute, X",  "ROL $4400,X", "$7E", 3, 7 ]
+	      ],
+	      "description": "ROR shifts all bits right one position. The Carry flag is shifted into bit 7 and the original bit 0 is shifted into the Carry flag."
+	  },
+	  "RTI": {
+	      "mnemonic": "ReTurn from Interrupt",
+	      "flags": [ "S", "Z", "C", "I", "V" ],
+	      "modes": [
+	          [ "Implied",      "RTI",         "$40", 1, 6 ]
+	      ],
+	      "description": "RTI retrievs the Processor Status Word (flags) and the Program Counter from the stack in that order (interrupts push the PC first and then the PSW).\\n\\nNot unlike RTS, the return address on the stack is the actual address rather than the address-1."
+	  },
+	  "RTS": {
+	      "mnemonic": "ReTurn from Subroutine",
+	      "flags": [ "S", "Z", "C", "I", "V" ],
+	      "modes": [
+	          [ "Implied",      "RTS",         "$60", 1, 6 ]
+	      ],
+	      "description": "RTS pulls the top two bytes off the stack (low byte first) and transfers program control to that address+1. It is used, as expected, to exit a subroutine invoked via JSR, which pushed the address-1.\\n\\nRTS is frequently used to implement a jump table where addresses-1 are pushed onto the stack and accessed via RTS. E.g. to access the second of four routines:\\n\\nLDX #1\\nJSR EXEC\\nJMP SOMEWHERE\\n\\n\\nLOBYTE\\n.BYTE <ROUTINE0-1,<ROUTINE1-1\\n.BYTE <ROUTINE2-1,<ROUTINE3-1\\n\\nHIBYTE\\n.BYTE >ROUTINE0-1,>ROUTINE1-1\\n.BYTE >ROUTINE2-1,>ROUTINE3-1\\n\\n\\nEXEC\\nLDA HIBYTE,X\\nPHA\\nLDA LOBYTE,X\\nPHA\\nRTS\\n"
+	  },
+	  "SBC": {
+	      "mnemonic": "SuBtract with Carry",
+	      "flags": [ "S", "V", "Z", "C" ],
+	      "modes": [
+	          [ "Immediate",    "SBC #$44",    "$E9", 2, 2 ],
+	          [ "Zero Page",    "SBC $44",     "$E5", 2, 3 ],
+	          [ "Zero Page, X", "SBC $44,X",   "$F5", 2, 4 ],
+	          [ "Absolute",     "SBC $4400",   "$ED", 3, 4 ],
+	          [ "Absolute, X",  "SBC $4400,X", "$FD", 3, 4, 1 ],
+	          [ "Absolute, Y",  "SBC $4400,Y", "$F9", 3, 4, 1 ],
+	          [ "Indirect, X",  "SBC ($44,X)", "$E1", 2, 6 ],
+	          [ "Indirect, Y",  "SBC ($44),Y", "$F1", 2, 5, 1 ]
+	      ],
+	      "notes": [
+	          "add 1 cycle if page boundary crossed"
+	      ],
+	      "description": "SBC results are dependant on the setting of the decimal flag. In decimal mode, subtraction is carried out on the assumption that the values involved are packed BCD (Binary Coded Decimal).\\n\\nThere is no way to subtract without the carry which works as an inverse borrow. I.e., to subtract you set the carry before the operation. If the carry is cleared by the operation, it indicates a borrow occurred."
+	  },
+	  "STA": {
+	      "mnemonic": "STore Accumulator",
+	      "flags": [ ],
+	      "modes": [
+	          [ "Zero Page",    "STA $44",     "$85", 2, 3 ],
+	          [ "Zero Page, X", "STA $44,X",   "$95", 2, 4 ],
+	          [ "Absolute",     "STA $4400",   "$8D", 3, 4 ],
+	          [ "Absolute, X",  "STA $4400,X", "$9D", 3, 5 ],
+	          [ "Absolute, Y",  "STA $4400,Y", "$99", 3, 5 ],
+	          [ "Indirect, X",  "STA ($44,X)", "$81", 2, 6 ],
+	          [ "Indirect, Y",  "STA ($44),Y", "$91", 2, 6 ]
+	      ]
+	  },
+	  "TSX": {
+	      "mnemonic": "Transfer Stack Pointer to X",
+	      "flags": [ ],
+	      "modes": [
+	          [ "Implied",      "TSX",         "$BA", 1, 2 ]
+	      ]
+	  },
+	  "TXS": {
+	      "mnemonic": "Transfer X to Stack Pointer",
+	      "flags": [ ],
+	      "modes": [
+	          [ "Implied",      "TXS",         "$9A", 1, 2 ]
+	      ]
+	  },
+	  "PHA": {
+	      "mnemonic": "PusH Accumulator",
+	      "flags": [ ],
+	      "modes": [
+	          [ "Implied",      "PHA",         "$48", 1, 3 ]
+	      ]
+	  },
+	  "PLA": {
+	      "mnemonic": "PuLl Accumulator",
+	      "flags": [ ],
+	      "modes": [
+	          [ "Implied",      "PLA",         "$68", 1, 4 ]
+	      ],
+	      "description": "The \"PuLl\" operations are known as \"POP\" on most other microprocessors. With the 6502, the stack is always on page one ($100-$1FF) and works top down."
+	  },
+	  "PHP": {
+	      "mnemonic": "PusH Processor status",
+	      "flags": [ ],
+	      "modes": [
+	          [ "Implied",      "PHP",         "$08", 1, 3 ]
+	      ]
+	  },
+	  "PLP": {
+	      "mnemonic": "PuLl Processor status",
+	      "flags": [ ],
+	      "modes": [
+	          [ "Implied",      "PLP",         "$28", 1, 4 ]
+	      ],
+	      "description": "The \"PuLl\" operations are known as \"POP\" on most other microprocessors. With the 6502, the stack is always on page one ($100-$1FF) and works top down."
+	  },
+	  "STX": {
+	      "mnemonic": "STore X register",
+	      "flags": [ ],
+	      "modes": [
+	          [ "Zero Page",    "STX $44",     "$86", 2, 3 ],
+	          [ "Zero Page, Y", "STX $44,X",   "$96", 2, 4 ],
+	          [ "Absolute",     "STX $4400",   "$8E", 3, 4 ]
+	      ]
+	  },
+	  "STY": {
+	      "mnemonic": "STore Y register",
+	      "flags": [ ],
+	      "modes": [
+	          [ "Zero Page",    "STY $44",     "$84", 2, 3 ],
+	          [ "Zero Page, Y", "STY $44,X",   "$94", 2, 4 ],
+	          [ "Absolute",     "STY $4400",   "$8C", 3, 4 ]
+	      ]
+	  }
+	}
+}
